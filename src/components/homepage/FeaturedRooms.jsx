@@ -1,12 +1,12 @@
 import React from "react";
 import RoomCard from "../roomspage/RoomCard";
-import { fetchRooms } from "@/lib/rooms/data";
+import { fetchFeaturedRooms } from "@/lib/rooms/data";
 
 
 
 
 const FeaturedRooms = async () => {
-  const rooms = await fetchRooms();
+  const rooms = await fetchFeaturedRooms();
 
   return (
     <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
