@@ -28,6 +28,9 @@ const handleLogin = async (e) => {
     ...loginData,
   });
 
+  // const { data: tokenData } = await authClient.token()
+  // console.log(tokenData);
+
   if (error) {
     console.log(error.message);
     toast.error("Login Failed");
