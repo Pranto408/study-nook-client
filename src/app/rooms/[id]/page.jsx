@@ -2,11 +2,15 @@ import React from "react";
 import { MapPin, Users, Clock, Wifi, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
-const fetchRoom = async (id) => {
+const fetchRoom = async (id,token) => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rooms/${id}`, {
-      cache: "no-store",
+      headers: {
+        authorization: `Bearer ${token}` || "",
+      },
     });
     if (!res.ok) return null;
     return await res.json();
@@ -17,8 +21,12 @@ const fetchRoom = async (id) => {
 };
 
 const RoomDetails = async ({ params }) => {
-      const { id } = await params; 
-      const room = await fetchRoom(id);
+  const { id } = await params; 
+      const {token} = await auth.api.getToken({
+          headers: await headers(),
+      });
+  console.log(token);
+      const room = await fetchRoom(id,token);
 
   if (!room) {
     return (
