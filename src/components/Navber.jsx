@@ -1,16 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  Button,
-  Avatar,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  DropdownSection,
-} from "@heroui/react";
+import { useRouter, usePathname } from "next/navigation";
+import { Avatar, Button } from "@heroui/react";
 import { BookOpen, ChevronDown, Menu, X } from "lucide-react";
 import { HiOutlineHome } from "react-icons/hi";
 import { MdMeetingRoom } from "react-icons/md";
@@ -18,11 +11,8 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { BsBuildings } from "react-icons/bs";
 import { RiCalendarCheckLine } from "react-icons/ri";
 import { LuLogOut, LuUser } from "react-icons/lu";
-
-// Mock user — swap with real auth context later
-// null = logged out | object = logged in
-const MOCK_USER = null;
-// const MOCK_USER = { name: "Arif Hossain", photo: "https://i.pravatar.cc/40?img=12" };
+import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast";
 
 const PUBLIC_LINKS = [
   { href: "/", label: "Home", icon: <HiOutlineHome className="text-base" /> },
@@ -53,15 +43,23 @@ const PRIVATE_LINKS = [
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const dropdownRef = useRef(null);
+  const router = useRouter();
+  const pathname = usePathname();
 
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
+  // Handle scroll opacity changes
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close mobile menu on resize to desktop
+  // Collapse mobile burger overlay on window scaling
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setIsMenuOpen(false);
@@ -69,6 +67,42 @@ export default function Navbar() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  // Closes dropdown overlay automatically if clicking on outside elements
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    setIsProfileOpen(false);
+    await authClient.signOut();
+    toast.success("Logged out successfully");
+    router.push("/");
+  };
+
+  const navLinkClass = (href) => {
+    const isActive = pathname === href;
+    return `flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full transition-all duration-200 no-underline ${
+      isActive
+        ? "bg-neutral-900 text-white"
+        : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
+    }`;
+  };
+
+  const mobileNavLinkClass = (href) => {
+    const isActive = pathname === href;
+    return `flex items-center gap-2.5 text-sm font-medium px-3 py-2.5 rounded-xl transition-colors no-underline ${
+      isActive
+        ? "bg-neutral-900 text-white"
+        : "text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50"
+    }`;
+  };
 
   return (
     <header
@@ -91,103 +125,132 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* ── Desktop center links ── */}
+          {/* ── Desktop nav ── */}
           <nav className="hidden md:flex items-center gap-1">
             {PUBLIC_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-1.5 rounded-full hover:bg-neutral-100 transition-all duration-200 no-underline"
+                className={navLinkClass(link.href)}
               >
                 {link.icon}
                 {link.label}
               </Link>
             ))}
 
-            <span className="h-4 w-px bg-neutral-300 mx-1" />
-
-            {PRIVATE_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 px-3 py-1.5 rounded-full hover:bg-neutral-100 transition-all duration-200 no-underline"
-              >
-                {link.icon}
-                {link.label}
-              </Link>
-            ))}
+            {(user || isPending) && (
+              <>
+                <span className="h-4 w-px bg-neutral-300 mx-1" />
+                {PRIVATE_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={navLinkClass(link.href)}
+                  >
+                    {link.icon}
+                    {link.label}
+                  </Link>
+                ))}
+              </>
+            )}
           </nav>
 
           {/* ── Desktop right: auth ── */}
           <div className="hidden md:flex items-center gap-2">
-            {MOCK_USER ? (
-              /* Logged in */
-              <Dropdown placement="bottom-end">
-                <DropdownTrigger>
-                  <button className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-neutral-100 transition-colors outline-none cursor-pointer">
-                    <Avatar
-                      src={MOCK_USER.photo}
-                      name={MOCK_USER.name}
-                      size="sm"
-                      className="w-8 h-8"
+            {isPending ? (
+              <div className="flex items-center gap-2 pl-1 pr-3 py-1 h-8 w-28 rounded-full bg-neutral-100 animate-pulse" />
+            ) : user ? (
+              /* ── Custom HTML/Tailwind Profile Dropdown (FIXED IMAGES) ── */
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer select-none border-none bg-transparent"
+                >
+                  {/* ডেস্কটপ ইমেজ চেকিং */}
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt={user.name || "User"}
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-neutral-200"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        const fallback = e.target.nextSibling;
+                        if (fallback) fallback.classList.remove("hidden");
+                      }}
                     />
-                    <span className="text-sm font-medium text-neutral-800 hidden lg:block">
-                      {MOCK_USER.name}
-                    </span>
-                    <ChevronDown size={14} className="text-neutral-400" />
-                  </button>
-                </DropdownTrigger>
-                <DropdownMenu
-                  aria-label="Profile menu"
-                  itemClasses={{ base: "gap-2 text-sm" }}
-                >
-                  <DropdownSection showDivider>
-                    <DropdownItem
-                      key="my-listings"
-                      startContent={<BsBuildings />}
-                      href="/my-listings"
+                  ) : null}
+
+                  {/* ডেস্কটপ ফলব্যাক লেটার অ্যাভাটার */}
+                  <Avatar
+                    name={user.name}
+                    size="sm"
+                    className={`w-8 h-8 flex-shrink-0 ${user.image ? "hidden" : ""}`}
+                  />
+
+                  <span className="text-sm font-medium text-neutral-800 hidden lg:block max-w-[120px] truncate">
+                    {user.name}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={`text-neutral-400 flex-shrink-0 transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {/* Dropdown Menu Overlay */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-neutral-200 rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-100">
+                    <button
+                      onClick={() => {
+                        router.push("/my-listings");
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors text-left border-none bg-transparent"
                     >
+                      <BsBuildings className="text-neutral-500" />
                       My Listings
-                    </DropdownItem>
-                    <DropdownItem
-                      key="my-bookings"
-                      startContent={<RiCalendarCheckLine />}
-                      href="/my-bookings"
+                    </button>
+                    <button
+                      onClick={() => {
+                        router.push("/my-bookings");
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors text-left border-none bg-transparent"
                     >
+                      <RiCalendarCheckLine className="text-neutral-500" />
                       My Bookings
-                    </DropdownItem>
-                  </DropdownSection>
-                  <DropdownItem
-                    key="logout"
-                    startContent={<LuLogOut />}
-                    className="text-danger"
-                    color="danger"
-                  >
-                    Logout
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+                    </button>
+                    <hr className="border-neutral-100 my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-medium border-none bg-transparent"
+                    >
+                      <LuLogOut />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              /* Logged out */
+              /* ── Logged out (FIXED WRAPPERS) ── */
               <>
-                <Button
-                  as={Link}
-                  href="/login"
-                  variant="light"
-                  size="sm"
-                  className="font-medium text-neutral-600"
-                  startContent={<LuUser size={15} />}
-                >
-                  Login
-                </Button>
-                <Button
-                  as={Link}
-                  href="/register"
-                  size="sm"
-                  className="font-semibold bg-neutral-900 text-white hover:bg-neutral-700 rounded-full px-5"
-                >
-                  Register
-                </Button>
+                <Link href="/login" passHref className="no-underline">
+                  <Button
+                    variant="light"
+                    size="sm"
+                    className="font-medium text-neutral-600"
+                    startContent={<LuUser size={15} />}
+                  >
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register" passHref className="no-underline">
+                  <Button
+                    size="sm"
+                    className="font-semibold bg-neutral-900 text-white hover:bg-neutral-700 rounded-full px-5"
+                  >
+                    Register
+                  </Button>
+                </Link>
               </>
             )}
           </div>
@@ -218,51 +281,116 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-2.5 text-sm font-medium text-neutral-700 hover:text-neutral-900 px-3 py-2.5 rounded-xl hover:bg-neutral-50 transition-colors no-underline"
+              className={mobileNavLinkClass(link.href)}
             >
-              <span className="text-neutral-500">{link.icon}</span>
+              <span
+                className={
+                  pathname === link.href ? "text-white" : "text-neutral-500"
+                }
+              >
+                {link.icon}
+              </span>
               {link.label}
             </Link>
           ))}
 
-          <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-semibold px-3 mt-3 mb-1">
-            My Account
-          </p>
-          {PRIVATE_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-2.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 px-3 py-2.5 rounded-xl hover:bg-neutral-50 transition-colors no-underline"
-            >
-              <span className="text-neutral-400">{link.icon}</span>
-              {link.label}
-            </Link>
-          ))}
+          {(user || isPending) && (
+            <>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-semibold px-3 mt-3 mb-1">
+                My Account
+              </p>
+              {PRIVATE_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={mobileNavLinkClass(link.href)}
+                >
+                  <span
+                    className={
+                      pathname === link.href ? "text-white" : "text-neutral-400"
+                    }
+                  >
+                    {link.icon}
+                  </span>
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          )}
 
           <hr className="border-neutral-100 my-3" />
 
-          <div className="flex gap-2">
-            <Button
-              as={Link}
-              href="/login"
-              onClick={() => setIsMenuOpen(false)}
-              variant="bordered"
-              className="flex-1 font-medium border-neutral-300 text-neutral-700 rounded-full"
-              size="sm"
-            >
-              Login
-            </Button>
-            <Button
-              as={Link}
-              href="/register"
-              onClick={() => setIsMenuOpen(false)}
-              className="flex-1 font-semibold bg-neutral-900 text-white rounded-full"
-              size="sm"
-            >
-              Register
-            </Button>
-          </div>
+          {isPending ? (
+            <div className="h-8 w-full bg-neutral-100 animate-pulse rounded-xl" />
+          ) : user ? (
+            /* Mobile logged in (FIXED IMAGES) */
+            <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2.5">
+                {/* মোবাইল ইমেজ চেকিং */}
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.name || "User"}
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-neutral-200"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      const fallback = e.target.nextSibling;
+                      if (fallback) fallback.classList.remove("hidden");
+                    }}
+                  />
+                ) : null}
+
+                {/* মোবাইল ফলব্যাক লেটার অ্যাভাটার */}
+                <Avatar
+                  name={user.name}
+                  size="sm"
+                  className={`w-8 h-8 flex-shrink-0 ${user.image ? "hidden" : ""}`}
+                />
+                <div>
+                  <p className="text-sm font-semibold text-neutral-800 leading-tight">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-neutral-400 truncate max-w-[160px]">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <LuLogOut size={15} />
+                Logout
+              </button>
+            </div>
+          ) : (
+            /* Mobile logged out (FIXED WRAPPERS) */
+            <div className="flex gap-2">
+              <Link href="/login" passHref className="flex-1 no-underline">
+                <Button
+                  onClick={() => setIsMenuOpen(false)}
+                  variant="bordered"
+                  className="w-full font-medium border-neutral-300 text-neutral-700 rounded-full hover:border-neutral-700"
+                  size="sm"
+                >
+                  Login
+                </Button>
+              </Link>
+              <Link href="/register" passHref className="flex-1 no-underline">
+                <Button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full font-semibold bg-neutral-900 text-white rounded-full"
+                  size="sm"
+                >
+                  Register
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -34,7 +34,7 @@ const handleLogin = async (e) => {
     return;
   }
 
-  router.push("/");
+    router.push("/");
   toast.success("Login Successful");
 };
 

@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**", // allows all external hosts
+        hostname: "**", // Correct way to define wildcards for all domains
       },
     ],
   },
