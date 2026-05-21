@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
@@ -15,7 +15,10 @@ const AMENITIES_OPTIONS = [
 ];
 
 const AddRoomPage = () => {
-  const router = useRouter();
+    const router = useRouter();
+    useEffect(() => {
+      document.title = "StudyNook – Add Room";
+    }, []);
   const [loading, setLoading] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [form, setForm] = useState({

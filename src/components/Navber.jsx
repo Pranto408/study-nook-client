@@ -13,6 +13,7 @@ import { RiCalendarCheckLine } from "react-icons/ri";
 import { LuLogOut, LuUser } from "react-icons/lu";
 import { authClient } from "@/lib/auth-client";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const PUBLIC_LINKS = [
   { href: "/", label: "Home", icon: <HiOutlineHome className="text-base" /> },
@@ -118,6 +119,7 @@ export default function Navbar() {
             className="flex items-center gap-2 no-underline flex-shrink-0"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-neutral-900 text-white">
+              
               <BookOpen size={16} strokeWidth={2.5} />
             </div>
             <span className="font-bold text-lg tracking-tight text-neutral-900">
@@ -341,7 +343,7 @@ export default function Navbar() {
                   />
                 ) : null}
 
-                {/* মোবাইল ফলব্যাক লেটার অ্যাভাটার */}
+              
                 <Avatar
                   name={user.name}
                   size="sm"

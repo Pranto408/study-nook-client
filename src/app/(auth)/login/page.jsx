@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
 import { Eye, EyeOff } from "lucide-react";
@@ -9,8 +9,12 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 
+
 const LoginPage = () => {
-    const router = useRouter();
+  const router = useRouter();
+  useEffect(() => {
+    document.title = "StudyNook – Login";
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
@@ -41,8 +45,13 @@ const handleLogin = async (e) => {
   toast.success("Login Successful");
 };
 
-  const handleGoogle = () => {
-    // wire up Google OAuth here
+  const handleGoogle = async() => {
+    try {
+      await authClient.signIn.social({ provider: "google" });
+      router.push("/");
+    } catch (err) {
+      toast.error("Google sign-in failed");
+    }
   };
 
   return (
