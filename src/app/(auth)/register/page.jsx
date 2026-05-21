@@ -9,7 +9,7 @@
 // import toast from "react-hot-toast";
 
 // const RegisterPage = () => {
-//     const router = useRouter();
+//   const router = useRouter();
 //   const [showPassword, setShowPassword] = useState(false);
 //   const [form, setForm] = useState({
 //     name: "",
@@ -33,24 +33,39 @@
 //     return "";
 //   };
 
-//   const handleRegister = async(e) => {
+//   const handleRegister = async (e) => {
 //     e.preventDefault();
 
-//     const formData= new FormData(e.currentTarget)
-//       const registerData = Object.fromEntries(formData.entries());
-//       console.log(registerData);
-//       const { data, error } = await authClient.signUp.email(
-//         {
-//               ...registerData,
+//     // 1. Run your Password Validation check first
+//     const validationError = validatePassword(form.password);
+//     if (validationError) {
+//       setPasswordError(validationError);
+//       toast.error(validationError);
+//       return;
+//     }
 
-//           });
+//     try {
+//       // 2. Explicitly map your local form fields to Better Auth schema keys
+//       const { data, error } = await authClient.signUp.email({
+//         name: form.name,
+//         email: form.email,
+//         password: form.password,
+//         image: form.photoURL, // FIX: Maps your form's photoURL into the 'image' key authClient expects!
+//       });
+
 //       if (error) {
-//           console.log(error.message);
-//           toast.error("Registration Failed");
-//           return;
+//         console.error(error.message);
+//         toast.error(error.message || "Registration Failed");
+//         return;
 //       }
-//       router.push("/")
+
 //       toast.success("Registration Successful");
+//       router.push("/");
+//       router.refresh(); // Forces Next.js layout to pull the newly registered user session cache immediate
+//     } catch (err) {
+//       console.error(err);
+//       toast.error("An unexpected error occurred");
+//     }
 //   };
 
 //   const handleGoogle = () => {
@@ -206,49 +221,54 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
+const passwordRules = [
+  { id: "length", label: "At least 6 characters", test: (p) => p.length >= 6 },
+  {
+    id: "uppercase",
+    label: "At least one uppercase letter",
+    test: (p) => /[A-Z]/.test(p),
+  },
+  {
+    id: "lowercase",
+    label: "At least one lowercase letter",
+    test: (p) => /[a-z]/.test(p),
+  },
+];
+
 const RegisterPage = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     photoURL: "",
     password: "",
   });
-  const [passwordError, setPasswordError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    if (e.target.name === "password") setPasswordError("");
   };
 
-  const validatePassword = (password) => {
-    if (!/[A-Z]/.test(password))
-      return "Password must contain at least 1 capital letter.";
-    if (!/[0-9]/.test(password))
-      return "Password must contain at least 1 number.";
-    if (password.length < 8) return "Password must be at least 8 characters.";
-    return "";
-  };
+  const allRulesPassed = passwordRules.every((rule) =>
+    rule.test(form.password),
+  );
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setPasswordTouched(true);
 
-    // 1. Run your Password Validation check first
-    const validationError = validatePassword(form.password);
-    if (validationError) {
-      setPasswordError(validationError);
-      toast.error(validationError);
+    if (!allRulesPassed) {
+      toast.error("Please fix the password errors before submitting.");
       return;
     }
 
     try {
-      // 2. Explicitly map your local form fields to Better Auth schema keys
       const { data, error } = await authClient.signUp.email({
         name: form.name,
         email: form.email,
         password: form.password,
-        image: form.photoURL, // FIX: Maps your form's photoURL into the 'image' key authClient expects!
+        image: form.photoURL,
       });
 
       if (error) {
@@ -257,17 +277,21 @@ const RegisterPage = () => {
         return;
       }
 
-      toast.success("Registration Successful");
-      router.push("/");
-      router.refresh(); // Forces Next.js layout to pull the newly registered user session cache immediate
+      toast.success("Registration successful! Please login.");
+      router.push("/login");
     } catch (err) {
       console.error(err);
       toast.error("An unexpected error occurred");
     }
   };
 
-  const handleGoogle = () => {
-    // wire up Google OAuth here
+  const handleGoogle = async () => {
+    try {
+      await authClient.signIn.social({ provider: "google" });
+      router.push("/");
+    } catch (err) {
+      toast.error("Google sign-in failed");
+    }
   };
 
   return (
@@ -341,14 +365,19 @@ const RegisterPage = () => {
                 Password
               </label>
               <div
-                className={`flex items-center border rounded-xl px-4 transition-colors bg-white ${passwordError ? "border-red-400" : "border-gray-200 hover:border-blue-300 focus-within:border-blue-500"}`}
+                className={`flex items-center border rounded-xl px-4 transition-colors bg-white ${
+                  passwordTouched && !allRulesPassed
+                    ? "border-red-400"
+                    : "border-gray-200 hover:border-blue-300 focus-within:border-blue-500"
+                }`}
               >
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
-                  placeholder="Min. 8 chars, 1 capital, 1 number"
+                  onFocus={() => setPasswordTouched(true)}
+                  placeholder="Min. 6 chars, 1 uppercase, 1 lowercase"
                   required
                   className="flex-1 py-2.5 text-sm text-gray-800 placeholder-gray-300 outline-none bg-transparent"
                 />
@@ -360,9 +389,8 @@ const RegisterPage = () => {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {passwordError && (
-                <p className="text-xs text-red-500 mt-0.5">{passwordError}</p>
-              )}
+
+
             </div>
 
             {/* Submit */}
