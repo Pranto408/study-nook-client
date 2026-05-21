@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { BookOpen, Mail, Phone } from "lucide-react";
+import { BookOpen, LogIn, Mail, Phone } from "lucide-react";
 import { FaFacebookF, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { HiOutlineHome } from "react-icons/hi";
 import { MdMeetingRoom } from "react-icons/md";
-import { HiOutlineInformationCircle } from "react-icons/hi";
+
 
 const USEFUL_LINKS = [
   { href: "/", label: "Home", icon: <HiOutlineHome /> },
   { href: "/rooms", label: "Rooms", icon: <MdMeetingRoom /> },
-  { href: "/about", label: "About", icon: <HiOutlineInformationCircle /> },
+  { href: "/login", label: "Log in", icon: <LogIn /> },
 ];
 
 const SOCIAL_LINKS = [
