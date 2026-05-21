@@ -1,7 +1,10 @@
 
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
 
 const STATS = [
   { icon: <BookOpen size={15} />, label: "Study Rooms Listed" },
@@ -9,62 +12,115 @@ const STATS = [
   { icon: <ShieldCheck size={15} />, label: "No Double Bookings" },
 ];
 
+// This converts the standard Next.js Link into an animatable component
+const MotionLink = motion(Link);
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 20 },
+  },
+};
+
 export default function Banner() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-white">
-      {/* Soft Background Glow */}
-      <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-blue-100 blur-[120px] opacity-70" />
-      <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-indigo-100 blur-[100px] opacity-60" />
+      {/* Soft Background Glows */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 0.7, scale: 1 }}
+        transition={{ duration: 1.5 }}
+        className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-blue-100 blur-[120px] pointer-events-none"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 0.6, scale: 1 }}
+        transition={{ duration: 1.5, delay: 0.2 }}
+        className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-indigo-100 blur-[100px] pointer-events-none"
+      />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full py-10 lg:py-15">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* LEFT CONTENT */}
-          <div>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide">
+            <motion.div
+              variants={itemVariants}
+              className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               University Library Booking Platform
-            </div>
+            </motion.div>
 
             {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[64px] font-bold text-gray-900 leading-[1.05] tracking-tight mb-6">
+            <motion.h1
+              variants={itemVariants}
+              className="text-4xl sm:text-5xl lg:text-[64px] font-bold text-gray-900 leading-[1.05] tracking-tight mb-6"
+            >
               Find Your{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10 text-blue-600">Perfect</span>
-                
+              <span className="relative inline-block text-blue-600">
+                Perfect
               </span>{" "}
               Study Room
-            </h1>
+            </motion.h1>
 
             {/* Description */}
-            <p className="text-lg sm:text-xl text-gray-500 leading-relaxed mb-10 max-w-xl">
-              Browse and book quiet, private study rooms in your library.
+            <motion.p
+              variants={itemVariants}
+              className="text-lg sm:text-xl text-gray-500 leading-relaxed mb-10 max-w-xl"
+            >
+              Browse and book quiet, private study rooms in your library.{" "}
               <span className="text-gray-700 font-medium">
-                {" "}
                 List your own room.
               </span>
-            </p>
+            </motion.p>
 
             {/* Buttons */}
-            <div className="flex flex-wrap items-center gap-4">
-              <Link
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-wrap items-center gap-4"
+            >
+              <MotionLink
                 href="/rooms"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-blue-200 hover:-translate-y-0.5"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors duration-200 shadow-lg shadow-blue-200 cursor-pointer"
               >
                 Explore Rooms
                 <ArrowRight size={16} strokeWidth={2.5} />
-              </Link>
+              </MotionLink>
 
-              <Link
+              <MotionLink
                 href="/add-room"
-                className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-sm font-semibold px-6 py-3 rounded-xl transition-colors duration-200 cursor-pointer"
               >
                 List Your Room
-              </Link>
-            </div>
+              </MotionLink>
+            </motion.div>
 
             {/* Stats */}
-            <div className="flex flex-wrap items-center gap-6 mt-12 pt-8 border-t border-gray-200">
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-wrap items-center gap-6 mt-12 pt-8 border-t border-gray-200"
+            >
               {STATS.map((stat) => (
                 <div
                   key={stat.label}
@@ -74,13 +130,27 @@ export default function Banner() {
                   {stat.label}
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* RIGHT IMAGE SECTION */}
-          <div className="relative flex justify-center">
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 60,
+              damping: 15,
+              delay: 0.4,
+            }}
+            className="relative flex justify-center"
+          >
             {/* Image Container */}
-            <div className="overflow-hidden rounded-3xl border border-gray-200 shadow-2xl shadow-gray-200/70">
+            <motion.div
+              whileHover={{ scale: 1.015 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden rounded-3xl border border-gray-200 shadow-2xl shadow-gray-200/70 w-full"
+            >
               <Image
                 src="/banner.jpg"
                 alt="Study Room"
@@ -89,10 +159,8 @@ export default function Banner() {
                 className="object-cover w-full h-[620px]"
                 priority
               />
-            </div>
-
-            
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

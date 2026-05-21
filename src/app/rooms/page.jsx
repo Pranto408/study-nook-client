@@ -1,8 +1,10 @@
+
 "use client";
 
 import RoomCard from "@/components/roomspage/RoomCard";
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const AMENITIES_OPTIONS = [
   "Whiteboard",
@@ -12,6 +14,46 @@ const AMENITIES_OPTIONS = [
   "Quiet Zone",
   "Air Conditioning",
 ];
+
+// Animation presets
+const panelVariants = {
+  hidden: { opacity: 0, height: 0, scaleY: 0.95, transformOrigin: "top" },
+  visible: {
+    opacity: 1,
+    height: "auto",
+    scaleY: 1,
+    transition: { type: "spring", duration: 0.4, bounce: 0.1 },
+  },
+  exit: {
+    opacity: 0,
+    height: 0,
+    scaleY: 0.95,
+    transition: { duration: 0.2, ease: "easeInOut" },
+  },
+};
+
+const chipVariants = {
+  hidden: { opacity: 0, scale: 0.8, x: -10 },
+  visible: { opacity: 1, scale: 1, x: 0 },
+  exit: { opacity: 0, scale: 0.8, x: 10, transition: { duration: 0.15 } },
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 120, damping: 20 },
+  },
+};
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState([]);
@@ -76,7 +118,7 @@ export default function RoomsPage() {
     selectedAmenities.length + (minRate ? 1 : 0) + (maxRate ? 1 : 0);
 
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 overflow-hidden">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
@@ -104,18 +146,24 @@ export default function RoomsPage() {
             placeholder="Search rooms by name..."
             className="w-full pl-9 pr-9 py-2.5 text-sm border border-gray-200 rounded-xl outline-none hover:border-blue-300 focus:border-blue-500 transition-colors bg-white"
           />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X size={14} />
-            </button>
-          )}
+          <AnimatePresence>
+            {search && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Filter toggle */}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={() => setFiltersOpen(!filtersOpen)}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border transition-colors shrink-0 ${
             filtersOpen || activeFilterCount > 0
@@ -126,188 +174,268 @@ export default function RoomsPage() {
           <SlidersHorizontal size={15} />
           <span className="hidden sm:inline">Filters</span>
           {activeFilterCount > 0 && (
-            <span className="w-4 h-4 rounded-full bg-white text-blue-600 text-[10px] font-bold flex items-center justify-center">
+            <motion.span
+              initial={{ scale: 0.6 }}
+              animate={{ scale: 1 }}
+              className="w-4 h-4 rounded-full bg-white text-blue-600 text-[10px] font-bold flex items-center justify-center"
+            >
               {activeFilterCount}
-            </span>
+            </motion.span>
           )}
-        </button>
+        </motion.button>
       </div>
 
-      {/* Filter panel */}
-      {filtersOpen && (
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-5 flex flex-col gap-5">
-          {/* Amenities */}
-          <div>
-            <p className="text-sm font-semibold text-gray-700 mb-2.5">
-              Amenities
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {AMENITIES_OPTIONS.map((amenity) => {
-                const active = selectedAmenities.includes(amenity);
-                return (
-                  <button
-                    key={amenity}
-                    onClick={() => toggleAmenity(amenity)}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
-                      active
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
-                    }`}
-                  >
-                    {amenity}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Rate range */}
-          <div>
-            <p className="text-sm font-semibold text-gray-700 mb-2.5">
-              Hourly Rate ($)
-            </p>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                value={minRate}
-                onChange={(e) => setMinRate(e.target.value)}
-                placeholder="Min"
-                min={0}
-                className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none hover:border-blue-300 focus:border-blue-500 transition-colors"
-              />
-              <span className="text-gray-400 text-sm">to</span>
-              <input
-                type="number"
-                value={maxRate}
-                onChange={(e) => setMaxRate(e.target.value)}
-                placeholder="Max"
-                min={0}
-                className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none hover:border-blue-300 focus:border-blue-500 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Clear all */}
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="self-start text-xs font-semibold text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors"
-            >
-              <X size={12} />
-              Clear all filters
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Active filter chips — shown when panel is closed */}
-      {hasActiveFilters && !filtersOpen && (
-        <div className="flex flex-wrap gap-2 mb-5">
-          {search && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full">
-              &quot;{search}&quot;
-              <button
-                onClick={() => setSearch("")}
-                className="hover:text-blue-900"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          )}
-          {selectedAmenities.map((a) => (
-            <span
-              key={a}
-              className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full"
-            >
-              {a}
-              <button
-                onClick={() => toggleAmenity(a)}
-                className="hover:text-blue-900"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          ))}
-          {minRate && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full">
-              Min ${minRate}
-              <button
-                onClick={() => setMinRate("")}
-                className="hover:text-blue-900"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          )}
-          {maxRate && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full">
-              Max ${maxRate}
-              <button
-                onClick={() => setMaxRate("")}
-                className="hover:text-blue-900"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          )}
-          <button
-            onClick={clearFilters}
-            className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+      {/* Filter panel (Animated Expand/Collapse) */}
+      <AnimatePresence initial={false}>
+        {filtersOpen && (
+          <motion.div
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-5 flex flex-col gap-5 overflow-hidden"
           >
-            Clear all
-          </button>
-        </div>
-      )}
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse"
-            >
-              <div className="h-48 bg-gray-100" />
-              <div className="p-4 flex flex-col gap-3">
-                <div className="h-4 bg-gray-100 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-full" />
-                <div className="h-3 bg-gray-100 rounded w-2/3" />
-                <div className="h-8 bg-gray-100 rounded-xl mt-2" />
+            {/* Amenities */}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2.5">
+                Amenities
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {AMENITIES_OPTIONS.map((amenity) => {
+                  const active = selectedAmenities.includes(amenity);
+                  return (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      key={amenity}
+                      onClick={() => toggleAmenity(amenity)}
+                      className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                        active
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                      }`}
+                    >
+                      {amenity}
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* Room grid */}
-      {!loading && rooms.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rooms.map((room) => (
-            <RoomCard key={room._id} room={room} />
-          ))}
-        </div>
-      )}
+            {/* Rate range */}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2.5">
+                Hourly Rate ($)
+              </p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={minRate}
+                  onChange={(e) => setMinRate(e.target.value)}
+                  placeholder="Min"
+                  min={0}
+                  className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none hover:border-blue-300 focus:border-blue-500 transition-colors"
+                />
+                <span className="text-gray-400 text-sm">to</span>
+                <input
+                  type="number"
+                  value={maxRate}
+                  onChange={(e) => setMaxRate(e.target.value)}
+                  placeholder="Max"
+                  min={0}
+                  className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none hover:border-blue-300 focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
 
-      {/* Empty state */}
-      {!loading && rooms.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-4xl mb-3">📚</p>
-          <h3 className="text-base font-semibold text-gray-700">
-            No rooms found
-          </h3>
-          <p className="text-sm text-gray-400 mt-1">
-            Try adjusting your search or filters.
-          </p>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-700"
+            {/* Clear all */}
+            {hasActiveFilters && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={clearFilters}
+                className="self-start text-xs font-semibold text-red-500 hover:text-red-600 flex items-center gap-1.5 transition-colors"
+              >
+                <X size={12} />
+                Clear all filters
+              </motion.button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Active filter chips — item entries animate organically */}
+      <div className="overflow-hidden">
+        <AnimatePresence>
+          {hasActiveFilters && !filtersOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="flex flex-wrap gap-2 mb-5"
             >
-              Clear filters
-            </button>
+              {search && (
+                <motion.span
+                  variants={chipVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full"
+                >
+                  &quot;{search}&quot;
+                  <button
+                    onClick={() => setSearch("")}
+                    className="hover:text-blue-900"
+                  >
+                    <X size={11} />
+                  </button>
+                </motion.span>
+              )}
+              {selectedAmenities.map((a) => (
+                <motion.span
+                  key={a}
+                  variants={chipVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full"
+                >
+                  {a}
+                  <button
+                    onClick={() => toggleAmenity(a)}
+                    className="hover:text-blue-900"
+                  >
+                    <X size={11} />
+                  </button>
+                </motion.span>
+              ))}
+              {minRate && (
+                <motion.span
+                  variants={chipVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full"
+                >
+                  Min ${minRate}
+                  <button
+                    onClick={() => setMinRate("")}
+                    className="hover:text-blue-900"
+                  >
+                    <X size={11} />
+                  </button>
+                </motion.span>
+              )}
+              {maxRate && (
+                <motion.span
+                  variants={chipVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full"
+                >
+                  Max ${maxRate}
+                  <button
+                    onClick={() => setMaxRate("")}
+                    className="hover:text-blue-900"
+                  >
+                    <X size={11} />
+                  </button>
+                </motion.span>
+              )}
+              <motion.button
+                variants={chipVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={clearFilters}
+                className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+              >
+                Clear all
+              </motion.button>
+            </motion.div>
           )}
-        </div>
-      )}
+        </AnimatePresence>
+      </div>
+
+      {/* Content Area wrapped in AnimatePresence for state transition animations */}
+      <AnimatePresence mode="wait">
+        {/* Loading skeleton */}
+        {loading && (
+          <motion.div
+            key="skeleton"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse"
+              >
+                <div className="h-48 bg-gray-100" />
+                <div className="p-4 flex flex-col gap-3">
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-full" />
+                  <div className="h-3 bg-gray-100 rounded w-2/3" />
+                  <div className="h-8 bg-gray-100 rounded-xl mt-2" />
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Room grid */}
+        {!loading && rooms.length > 0 && (
+          <motion.div
+            key="grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {rooms.map((room) => (
+              <motion.div key={room._id} variants={cardVariants} layout>
+                <RoomCard room={room} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Empty state */}
+        {!loading && rooms.length === 0 && (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center justify-center py-24 text-center"
+          >
+            <motion.p
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="text-4xl mb-3"
+            >
+              📚
+            </motion.p>
+            <h3 className="text-base font-semibold text-gray-700">
+              No rooms found
+            </h3>
+            <p className="text-sm text-gray-400 mt-1">
+              Try adjusting your search or filters.
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Clear filters
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
