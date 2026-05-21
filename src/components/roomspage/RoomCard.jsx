@@ -36,7 +36,7 @@ const RoomCard = ({ room }) => {
         />
         {/* Hourly rate badge */}
         <div className="absolute top-3 right-3 bg-white text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border border-blue-50">
-          {hourlyRate}
+          {`$${hourlyRate}/hr`}
         </div>
       </div>
 
@@ -62,7 +62,7 @@ const RoomCard = ({ room }) => {
           </span>
           <span className="flex items-center gap-1">
             <Clock size={12} className="text-blue-400 shrink-0" />
-            {hourlyRate}
+            {`$${hourlyRate}/hr`}
           </span>
         </div>
 

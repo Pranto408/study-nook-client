@@ -4,7 +4,7 @@ export const fetchRooms = async () => {
       cache: "no-store",
     });
     if (!res.ok) return [];
-    const data = await res.json(); // ← await was missing
+    const data = await res.json(); 
     return data || [];
   } catch (error) {
     console.error("Failed to fetch rooms:", error);
@@ -20,7 +20,7 @@ export const fetchFeaturedRooms = async () => {
       cache: "no-store",
     });
     if (!res.ok) return [];
-    const data = await res.json(); // ← await was missing
+    const data = await res.json();// ← await was missing
     return data || [];
   } catch (error) {
     console.error("Failed to fetch rooms:", error);

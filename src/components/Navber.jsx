@@ -119,7 +119,7 @@ export default function Navbar() {
             className="flex items-center gap-2 no-underline flex-shrink-0"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-neutral-900 text-white">
-              
+
               <BookOpen size={16} strokeWidth={2.5} />
             </div>
             <span className="font-bold text-lg tracking-tight text-neutral-900">
@@ -343,7 +343,6 @@ export default function Navbar() {
                   />
                 ) : null}
 
-              
                 <Avatar
                   name={user.name}
                   size="sm"
@@ -398,3 +397,4 @@ export default function Navbar() {
     </header>
   );
 }
+
