@@ -16,7 +16,7 @@ export default function Banner() {
       <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-blue-100 blur-[120px] opacity-70" />
       <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-indigo-100 blur-[100px] opacity-60" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full py-24 lg:py-32">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full py-10 lg:py-15">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* LEFT CONTENT */}
           <div>
@@ -31,10 +31,7 @@ export default function Banner() {
               Find Your{" "}
               <span className="relative inline-block">
                 <span className="relative z-10 text-blue-600">Perfect</span>
-                <span
-                  className="absolute bottom-1 left-0 right-0 h-3 bg-blue-100 rounded"
-                  aria-hidden="true"
-                />
+                
               </span>{" "}
               Study Room
             </h1>
@@ -44,7 +41,7 @@ export default function Banner() {
               Browse and book quiet, private study rooms in your library.
               <span className="text-gray-700 font-medium">
                 {" "}
-                List your own room and earn.
+                List your own room.
               </span>
             </p>
 
@@ -83,7 +80,7 @@ export default function Banner() {
           {/* RIGHT IMAGE SECTION */}
           <div className="relative flex justify-center">
             {/* Image Container */}
-            <div className="relative overflow-hidden rounded-3xl border border-gray-200 shadow-2xl shadow-gray-200/70">
+            <div className="overflow-hidden rounded-3xl border border-gray-200 shadow-2xl shadow-gray-200/70">
               <Image
                 src="/banner.jpg"
                 alt="Study Room"
@@ -94,14 +91,7 @@ export default function Banner() {
               />
             </div>
 
-            {/* Floating Card */}
-            <div className="absolute -bottom-6 -left-6 bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-xl">
-              <p className="text-sm text-gray-400 mb-1">Available Today</p>
-              <h3 className="text-gray-900 font-semibold text-lg">
-                Room 204 — East Wing
-              </h3>
-              <p className="text-blue-600 text-sm mt-1">3 Slots Remaining</p>
-            </div>
+            
           </div>
         </div>
       </div>
